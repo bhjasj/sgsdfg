@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fusion Backend — Admin</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="login-screen" class="screen">
+    <div class="login-box">
+      <h1>Fusion Backend</h1>
+      <p class="subtitle">Admin Dashboard</p>
+      <input id="backend-url" type="text" placeholder="Backend URL">
+      <input id="admin-key" type="password" placeholder="Admin key">
+      <button id="connect-btn">Connect</button>
+      <p id="login-error" class="error"></p>
+    </div>
+  </div>
+
+  <div id="app-screen" class="screen hidden">
+    <nav class="sidebar">
+      <h2>Fusion Backend</h2>
+      <button class="nav-btn active" data-tab="players">Players</button>
+      <button class="nav-btn" data-tab="catalog">Catalog</button>
+      <button class="nav-btn" data-tab="currencies">Currency</button>
+      <button class="nav-btn" data-tab="cloudscript">Cloud Script</button>
+      <button class="nav-btn" data-tab="player-detail" style="display:none" id="detail-nav">Player Detail</button>
+      <button id="disconnect-btn" class="disconnect">Disconnect</button>
+    </nav>
+
+    <main class="content">
+      <section id="tab-players" class="tab">
+        <div class="tab-header">
+          <h2>Players</h2>
+          <button id="refresh-players">Refresh</button>
+        </div>
+        <table id="players-table">
+          <thead>
+            <tr><th>Player ID</th><th>Display Name</th><th>Created</th><th>Last Login</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section id="tab-catalog" class="tab hidden">
+        <div class="tab-header">
+          <h2>Catalog</h2>
+          <button id="new-item-btn">+ New Item</button>
+        </div>
+        <table id="catalog-table">
+          <thead>
+            <tr><th>Item ID</th><th>Name</th><th>Class</th><th>Price</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section id="tab-item-create" class="tab hidden">
+        <div class="tab-header">
+          <h2>New Catalog Item</h2>
+          <button id="back-to-catalog">← Back</button>
+        </div>
+        <form id="catalog-form" class="card">
+          <input id="item-id" placeholder="item_id (e.g. sword_iron)" required>
+          <input id="item-name" placeholder="Display name" required>
+          <input id="item-desc" placeholder="Description">
+          <select id="item-currency" required></select>
+          <input id="item-price" type="number" placeholder="Price" required>
+          <input id="item-class" placeholder="Item class (e.g. weapon, cosmetic)">
+          <input id="item-icon" placeholder="Icon URL">
+          <button type="submit">Save Item</button>
+          <p id="catalog-form-error" class="error"></p>
+        </form>
+      </section>
+
+      <section id="tab-currencies" class="tab hidden">
+        <div class="tab-header">
+          <h2>Currency</h2>
+        </div>
+        <table id="currency-table">
+          <thead>
+            <tr><th>Code</th><th>Name</th><th>Starting</th><th>Per Day</th><th>Cap</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <form id="currency-form" class="card">
+          <h3>Create New Currency</h3>
+          <input id="new-currency-code" placeholder="Code (e.g. GOLD)" required>
+          <input id="new-currency-name" placeholder="Display name (e.g. Gold Coins)" required>
+          <input id="new-currency-initial" type="number" placeholder="Starting amount on first launch (e.g. 100)" value="0">
+          <input id="new-currency-daily" type="number" placeholder="Amount granted per day (0 = none)" value="0">
+          <input id="new-currency-max" type="number" placeholder="Cap for daily grants (leave blank for no cap)">
+          <button type="submit">Create Currency</button>
+          <p id="currency-form-error" class="error"></p>
+        </form>
+      </section>
+
+      <section id="tab-cloudscript" class="tab hidden">
+        <div class="tab-header">
+          <h2>Cloud Script</h2>
+        </div>
+        <p style="color:var(--steel-400); font-size:13px; margin-top:-8px;">
+          Named, server-authoritative action bundles. Unity triggers a script by name only —
+          it never controls what the script actually does.
+        </p>
+        <table id="cloudscript-table">
+          <thead>
+            <tr><th>Script Name</th><th>Description</th><th>Actions</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <form id="cloudscript-form" class="card">
+          <h3>Create / Update Script</h3>
+          <input id="cs-name" placeholder="script_name (e.g. kill_reward)" required>
+          <input id="cs-description" placeholder="Description (optional)">
+          <textarea id="cs-actions" rows="8" placeholder='[
+  {"type":"grant_currency","currency_code":"GOLD","amount":25},
+  {"type":"grant_item","item_id":"potion","quantity":1},
+  {"type":"subtract_currency","currency_code":"GOLD","amount":10},
+  {"type":"set_data","key":"last_kill_at","value":"now"}
+]'></textarea>
+          <p style="color:var(--steel-400); font-size:12px;">
+            Valid action types: <code>grant_currency</code>, <code>subtract_currency</code>, <code>grant_item</code>, <code>set_data</code>
+          </p>
+          <button type="submit">Save Script</button>
+          <p id="cloudscript-form-error" class="error"></p>
+        </form>
+      </section>
+
+      <section id="tab-player-detail" class="tab hidden">
+        <div class="tab-header">
+          <h2 id="detail-title">Player</h2>
+          <button id="back-to-players">← Back</button>
+        </div>
+
+        <div class="subnav">
+          <button class="subnav-btn active" data-subtab="overview">Overview</button>
+          <button class="subnav-btn" data-subtab="bans">Bans</button>
+          <button class="subnav-btn" data-subtab="currency">Currency</button>
+          <button class="subnav-btn" data-subtab="inventory">Inventory</button>
+          <button class="subnav-btn" data-subtab="logins">Logins</button>
+          <button class="subnav-btn" data-subtab="cloudscript-player">Cloud Script</button>
+        </div>
+
+        <div id="subtab-overview" class="subtab">
+          <div class="card">
+            <h3>Account</h3>
+            <div id="detail-account"></div>
+            <button id="delete-account-btn" class="danger-btn">Delete Account</button>
+          </div>
+          <div class="card">
+            <h3>Cloud Save Data</h3>
+            <pre id="detail-data"></pre>
+          </div>
+        </div>
+
+        <div id="subtab-bans" class="subtab hidden">
+          <div class="card">
+            <h3>Ban Status</h3>
+            <div id="detail-ban-status"></div>
+            <input id="ban-reason-input" placeholder="Reason (shown when banning)">
+            <input id="ban-duration-input" type="number" placeholder="Duration in minutes (leave blank for permanent)">
+            <button id="ban-toggle-btn"></button>
+          </div>
+        </div>
+
+        <div id="subtab-currency" class="subtab hidden">
+          <div class="card">
+            <h3>Currencies</h3>
+            <div id="detail-currencies"></div>
+            <div class="inline-form">
+              <select id="set-currency-code"></select>
+              <input id="set-currency-amount" type="number" placeholder="Amount">
+              <button id="set-currency-btn">Set</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="subtab-inventory" class="subtab hidden">
+          <div class="card">
+            <h3>Inventory</h3>
+            <div id="detail-inventory"></div>
+            <div class="inline-form">
+              <input id="grant-item-id" placeholder="item_id">
+              <input id="grant-quantity" type="number" placeholder="Qty" value="1">
+              <button id="grant-item-btn">Grant</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="subtab-logins" class="subtab hidden">
+          <div class="card">
+            <h3>Login History</h3>
+            <div id="detail-logins"></div>
+          </div>
+        </div>
+
+        <div id="subtab-cloudscript-player" class="subtab hidden">
+          <div class="card">
+            <h3>Run a Script on This Player</h3>
+            <div id="cs-player-script-list"></div>
+          </div>
+          <div class="card">
+            <h3>Execution Log</h3>
+            <div id="cs-player-log"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
